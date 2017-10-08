@@ -10,6 +10,7 @@ namespace {
         Minesweeper(const size_t width, const size_t height)
                 : width(width), height(height),
                   table(new char[width * height]) {
+            cover = new char[width * height];
             fillTable();
         }
 
@@ -43,8 +44,32 @@ namespace {
         void printTable() const {
             for(int i = 0; i < width * height; ++i) {
                 std::cout << table[i];
-                if(i % width == width -1) {
+                if(i % width == width - 1) {
                     std::cout << "\n";
+                }
+            }
+        }
+
+        void printCover() const {
+            for(int i = 0; i < width * height; ++i) {
+                std::cout << cover[i];
+                if(i % width == width - 1) {
+                    std::cout << "\n";
+                }
+            }
+        }
+
+        void reveal(int x, int y) {
+            if(x > 0 && x < width+1 && y > 0 && y < height+1) {
+                int position = ((y-1) * width) +  x-1;
+                if(*(cover+position) == '#') {
+                    *(cover+position) = *(table+position);
+                    if(*(cover+position) == '0') {
+                        reveal(x-1, y);
+                        reveal(x+1, y);
+                        reveal(x, y-1);
+                        reveal(x, y+1);
+                    }
                 }
             }
         }
@@ -57,6 +82,7 @@ namespace {
             int mineChance = 10 + (rand() % 6);
             for(int i = 0; i < width * height; ++i) {
                 *(table+i) = (rand() % 100 < mineChance) ? '*' : '.';
+                *(cover+i) = '#';
             }
         }
 
@@ -98,15 +124,22 @@ namespace {
 
         const size_t width, height;
         char *table;
+        char *cover;
     };
 }
 
 int main() {
     try {
         Minesweeper ms(25, 10);
-        ms.printTable();
         ms.countNeighbours();
-        ms.printTable();
+        ms.printCover();
+        while(true) {
+            int x, y;
+            std::cin >> x;
+            std::cin >> y;
+            ms.reveal(x, y);
+            ms.printCover();
+        }
     } catch (const std::bad_alloc &e) {
         std::cerr << "Couldn't allocate enough memory for minesweeper table" << std::endl;
         return EXIT_FAILURE;
